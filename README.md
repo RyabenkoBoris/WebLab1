@@ -1,7 +1,7 @@
 # Рябенко Борис Юрійович КВ-41мн
 
-**Лабораторна робота №1**
+**Лабораторна робота №2**
 
-**Розробка серверної частини Web-додатка**
+**Організація спільної роботи користувачів Web-додатка**
 
-**Google Drive:** https://docs.google.com/document/d/1qDZpO0C8LD419s7MO8viT_nd797_4KmB-ajgAUjro5U/edit?usp=sharing
+**Google Drive:** https://docs.google.com/document/d/1QC2QnDmNpYB8UnZ5Bo2FH-CN7zwCmtB5BxIY-bmAprM/edit?usp=sharing
