@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="loginForm">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+
+    <ul id="chatList"></ul>
+	<a id="adminLinkContainer" href="admin.html" style="display:none;">Users Online</a>
+    <script src="auth.js"></script>
+</body>
+</html>
