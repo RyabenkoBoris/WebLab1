@@ -7,9 +7,10 @@ class AppInfoSerializer(serializers.Serializer):
     logo = serializers.CharField()
     
 class MessageSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source='user.username', read_only=True)
     class Meta:
         model = Message
-        fields = ["id", "user", "text", "timestamp"]
+        fields = ["id", "user", "chat", "text", "timestamp"]
 
 class ChatSerializer(serializers.ModelSerializer):
     messages = MessageSerializer(many=True, read_only=True)

@@ -2,7 +2,7 @@ from .models import User
 from rest_framework import viewsets
 from .serializers import UserSerializer
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -25,7 +25,7 @@ class UserViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["get", "put"])
     def profile(self, request):
         if request.method == "GET":
-            serializer = UserSerializer(data=request.data)
+            serializer = UserSerializer(request.user)
             return Response(serializer.data)
 
         elif request.method == "PUT":
@@ -33,3 +33,4 @@ class UserViewSet(viewsets.ViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
+
