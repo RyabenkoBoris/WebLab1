@@ -6,17 +6,16 @@ from rest_framework.decorators import action
 from django.db.models import Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
-
 from .models import Chat, Message, User
 from .serializers import ChatSerializer, MessageSerializer,  AddUserToChatSerializer, AppInfoSerializer
 from rest_framework.views import APIView
+from .tasks import send_email_to_chat_users, add_user_to_chat_task
 
 
 class AppInfoView(APIView):
     serializer_class = AppInfoSerializer
     permission_classes = [AllowAny]
     def get(self, _):
-        print("⚠️ AppInfoView.get() was called")
         data = {
             "name": "Chat App",
             "description": "Це простий чат, у якому можна створювати групи для спілкування та обмінюватися "
@@ -67,16 +66,12 @@ class ChatViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             user_id = serializer.validated_data["user_id"]
             user = get_object_or_404(User, id=user_id)
-            if user in chat.users.all():
-                return Response({"detail": f"Користувач {user.username} вже є в чаті."}, status=status.HTTP_400_BAD_REQUEST)
 
-            chat.users.add(user)
-            Message.objects.create(
-                chat=chat,
-                text=f"Користувач {user.username} доданий до чату.",
-                timestamp=timezone.now()
-            )
-            return Response({"detail": f"Користувач {user.username} доданий до чату."})
+            add_user_to_chat_task.delay(chat.id, user.id)
+
+            return Response(
+                {"detail": f"Запит на додавання користувача {user.username} до чату був успішно надісланий."})
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MessageViewSet(viewsets.ViewSet):
@@ -95,7 +90,11 @@ class MessageViewSet(viewsets.ViewSet):
         chat = get_object_or_404(Chat, Q(users=request.user) | Q(creator=request.user), id=request.data.get("chat"))
         serializer = MessageSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(user=request.user, chat=chat)
+            message = serializer.save(user=request.user, chat=chat)
+
+            #Send notification to all users in chat
+            send_email_to_chat_users.delay(chat.id, message.text, request.user.id)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

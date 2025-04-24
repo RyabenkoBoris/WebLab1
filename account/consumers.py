@@ -1,6 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from chat.consumers import ChatConsumer
+from datetime import datetime
 
 class AdminConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -13,6 +14,7 @@ class AdminConsumer(AsyncWebsocketConsumer):
         await self.accept()
         await self.send_online_users()
 
+
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard("admin_updates", self.channel_name)
 
@@ -23,3 +25,12 @@ class AdminConsumer(AsyncWebsocketConsumer):
         users = ChatConsumer.get_online_users()
         user_data = [{"id": user[0], "email": user[1], "username": user[2]} for user in users]
         await self.send(text_data=json.dumps({"online_users": user_data}))
+
+    async def send_operation_status(self, event):
+        operation_status = {
+            "result": event,
+            "completion_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        await self.send(text_data=json.dumps({
+            "operation_status": operation_status
+        }))

@@ -59,7 +59,7 @@ async function loadMessages() {
 
     if (!chatId) return;
 
-    const response = await fetch(`${API_BASE}/chat/${chatId}/`, {
+    const response = await fetch(`${API_BASE}/chat/message/${chatId}/`, {
         headers: { "Authorization": `Bearer ${token}` }
     });
 

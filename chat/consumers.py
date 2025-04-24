@@ -3,10 +3,10 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from chat.models import Message, Chat
-from channels.layers import get_channel_layer
+
+from chat.tasks import send_email_to_chat_users
 
 User = get_user_model()
-channel_layer = get_channel_layer()
 
 REDIS_ONLINE_USERS_KEY = "online_users"
 
@@ -42,6 +42,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         message = await self.create_message(user, chat, data["text"])
+
+        send_email_to_chat_users.delay(self.chat_id, message.text, user.id)
+
+        """result = ["Відправка повідомлення користувачам чату", f"Chat ID: {chat.id}, Message: {message.text[:50]}..."]
+        await self.channel_layer.group_send(
+            "admin_updates",
+            {
+                "type": "send_operation_status",
+                "result": result,
+            }
+        )"""
 
         await self.channel_layer.group_send(
             self.room_group_name,
