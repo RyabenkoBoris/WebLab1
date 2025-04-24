@@ -3,10 +3,10 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from chat.models import Message, Chat
-from channels.layers import get_channel_layer
+
+from chat.tasks import send_email_to_chat_users
 
 User = get_user_model()
-channel_layer = get_channel_layer()
 
 REDIS_ONLINE_USERS_KEY = "online_users"
 
@@ -42,6 +42,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         message = await self.create_message(user, chat, data["text"])
+
+        send_email_to_chat_users.delay(self.chat_id, message.text, user.id)
+
+        """result = ["Відправка повідомлення користувачам чату", f"Chat ID: {chat.id}, Message: {message.text[:50]}..."]
+        await self.channel_layer.group_send(
+            "admin_updates",
+            {
+                "type": "send_operation_status",
+                "result": result,
+            }
+        )"""
 
         await self.channel_layer.group_send(
             self.room_group_name,
@@ -96,27 +107,3 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @staticmethod
     async def create_message(user, chat, text):
         return await Message.objects.acreate(user=user, chat=chat, text=text)
-
-
-class AdminConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.user = self.scope["user"]
-        if self.user.is_anonymous or not self.user.is_staff:
-            await self.close()
-            return
-
-        await self.channel_layer.group_add("admin_updates", self.channel_name)
-        await self.accept()
-        await self.send_online_users()
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard("admin_updates", self.channel_name)
-
-    async def update_admin(self, event):
-        await self.send(text_data=json.dumps({"online_users": event["users"]}))
-
-    async def send_online_users(self):
-        users = ChatConsumer.get_online_users()
-        user_data = [{"id": user[0], "email": user[1], "username": user[2]} for user in users]
-        await self.send(text_data=json.dumps({"online_users": user_data}))
-

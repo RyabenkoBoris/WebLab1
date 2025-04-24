@@ -1,34 +1,41 @@
-async function getUsers(){
-	const token = localStorage.getItem("access");
-	if(!token) return;
+async function getUsers() {
+    const token = localStorage.getItem("access");
+    if (!token) return;
 
-	const socket = new WebSocket(`ws://127.0.0.1:8000/ws/admin/?token=${token}`);
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/admin/?token=${token}`);
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.online_users) {
+            const usersDiv = document.getElementById("user-list");
+            usersDiv.innerHTML = "";
 
-	socket.onmessage = function(event) {
-		const data = JSON.parse(event.data);
-		const usersDiv = document.getElementById("online-users");
-		usersDiv.innerHTML = "";  // Clear previous list
+            if (data.online_users.length === 0) {
+                usersDiv.innerHTML = "<p>No users online</p>";
+                return;
+            }
 
-		if (data.online_users.length === 0) {
-			usersDiv.innerHTML = "<p>No users online</p>";
-			return;
-		}
+            data.online_users.forEach(user => {
+                const userElement = document.createElement("div");
+                userElement.classList.add("user");
+                userElement.textContent = `Id: ${user.id}, Username: ${user.username}, Email: ${user.email}`;
+                usersDiv.appendChild(userElement);
+            });
+        }
 
-		data.online_users.forEach(user => {
-			const userElement = document.createElement("div");
-			userElement.classList.add("user");
+        if (data.operation_status) {
+            const status = data.operation_status;
+            const table = document.getElementById("operation-status-table").querySelector("tbody");
+            const row = table.insertRow();
+            row.insertCell(0).innerText = status.result.data[0];
+            row.insertCell(1).innerText = status.result.data[1];
+            row.insertCell(2).innerText = status.result.data[2];
+            row.insertCell(3).innerText = status.completion_time;
+        }
+    };
 
-			// Format the user information
-			userElement.textContent = `Id: ${user.id}, Username: ${user.username}, Email: ${user.email}`;
-			
-			// Append the user element to the container
-			usersDiv.appendChild(userElement);
-		});
-	};
-
-	socket.onclose = function(event) {
-		document.getElementById("online-users").innerHTML = "<p>Connection lost</p>";
-	};
+    socket.onclose = function(event) {
+        document.getElementById("user-list").innerHTML = "<p>Connection lost</p>";
+    };
 }
 
 window.onload = getUsers;
