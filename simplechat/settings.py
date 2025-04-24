@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+from kombu import Queue
 
 from django.conf.global_settings import AUTH_USER_MODEL
 
@@ -131,6 +132,10 @@ DATABASES = {
     }
 }
 
+CELERY_QUEUES = (
+    Queue('email_queue'),
+    Queue('chat_queue'),
+)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

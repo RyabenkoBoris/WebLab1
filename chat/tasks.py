@@ -5,7 +5,7 @@ from .models import Chat, Message, User
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
-@shared_task
+@shared_task(queue='email_queue')
 def send_email_to_chat_users(chat_id, message, user_id):
     chat = Chat.objects.get(id=chat_id)
     channel_layer = get_channel_layer()
@@ -41,7 +41,7 @@ def send_email_to_chat_users(chat_id, message, user_id):
 
         return error_message
 
-@shared_task
+@shared_task(queue='chat_queue')
 def add_user_to_chat_task(chat_id, user_id):
     channel_layer = get_channel_layer()
     data = ["Додавання користувача до чату", f"Chat ID: {chat_id}, User ID: {user_id}"]
